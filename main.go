@@ -28,7 +28,6 @@ type Server struct {
 	quitCh    chan struct{}
 	msgCh     chan Message
 
-	//
 	kv *KV
 }
 
@@ -47,6 +46,7 @@ func NewServer(cfg Config) *Server {
 	}
 }
 
+// testing this comment out
 func (s *Server) Start() error {
 	ln, err := net.Listen("tcp", s.ListenAddr)
 	if err != nil {

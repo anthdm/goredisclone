@@ -24,13 +24,13 @@ func New(addr string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Set(ctx context.Context, key string, val string) error {
+func (c *Client) Set(ctx context.Context, key string, val any) error {
 	var buf bytes.Buffer
 	wr := resp.NewWriter(&buf)
 	wr.WriteArray([]resp.Value{
 		resp.StringValue("SET"),
 		resp.StringValue(key),
-		resp.StringValue(val),
+		resp.IntegerValue(val.(int)),
 	})
 	_, err := c.conn.Write(buf.Bytes())
 	return err
