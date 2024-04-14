@@ -6,6 +6,7 @@ import (
 	"log"
 	"log/slog"
 	"net"
+	"reflect"
 )
 
 const defaultListenAddr = ":5001"
@@ -62,9 +63,17 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) handleMessage(msg Message) error {
+	slog.Info("go message from client", "type", reflect.TypeOf(msg.cmd))
+
 	switch v := msg.cmd.(type) {
 	case SetCommand:
-		return s.kv.Set(v.key, v.val)
+		if err := s.kv.Set(v.key, v.val); err != nil {
+			return err
+		}
+		_, err := msg.peer.Send([]byte("OK\r\n"))
+		if err != nil {
+			return fmt.Errorf("peer send error: %s", err)
+		}
 	case GetCommand:
 		val, ok := s.kv.Get(v.key)
 		if !ok {
@@ -72,7 +81,15 @@ func (s *Server) handleMessage(msg Message) error {
 		}
 		_, err := msg.peer.Send(val)
 		if err != nil {
-			slog.Error("peer send error", "err", err)
+			return fmt.Errorf("peer send error: %s", err)
+		}
+	case HelloCommand:
+		spec := map[string]string{
+			"server": "redis",
+		}
+		_, err := msg.peer.Send(respWriteMap(spec))
+		if err != nil {
+			return fmt.Errorf("peer send error: %s", err)
 		}
 	}
 	return nil
